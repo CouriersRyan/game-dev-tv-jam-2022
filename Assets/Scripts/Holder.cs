@@ -38,23 +38,22 @@ public class Holder : MonoBehaviour
             else
             {
                 var holdableMask = 1 << LayerMask.NameToLayer("Holdable");
-                var facingRay = new Ray(transform.position, transform.forward * 10f);
-                if (Physics.Raycast(facingRay, out var hitInfo, maxDistance: Mathf.Infinity, layerMask: holdableMask))
+                if (Camera.main != null)
                 {
-                    held = hitInfo.rigidbody;
-                    held.transform.position = transform.position + transform.TransformDirection(holdOffset);
-                    held.transform.parent = transform;
-                    held.useGravity = false;
+                    var camTransform = Camera.main.transform;
+                    var facingRay = new Ray(camTransform.position, camTransform.forward);
+                    if (Physics.Raycast(facingRay, out var hitInfo, maxDistance: Mathf.Infinity, layerMask: holdableMask))
+                    {
+                        held = hitInfo.rigidbody;
+                        held.transform.position = camTransform.position + camTransform.TransformDirection(holdOffset);
+                        held.transform.parent = camTransform;
+                        held.useGravity = false;
+                    }
                 }
             }
 
             pickupPressed = false;
         }
-    }
-
-    private void OnDrawGizmos()
-    {
-        Debug.DrawRay(transform.position, transform.forward * 10f);
     }
 
     void OnPickUp(InputValue inputValue)

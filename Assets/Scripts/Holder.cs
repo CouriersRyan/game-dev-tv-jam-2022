@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -32,11 +33,12 @@ public class Holder : MonoBehaviour
             {
                 held.transform.parent = null;
                 held.useGravity = true;
+                held = null;
             }
             else
             {
                 var holdableMask = 1 << LayerMask.NameToLayer("Holdable");
-                var facingRay = new Ray(transform.position, transform.forward);
+                var facingRay = new Ray(transform.position, transform.forward * 10f);
                 if (Physics.Raycast(facingRay, out var hitInfo, maxDistance: Mathf.Infinity, layerMask: holdableMask))
                 {
                     held = hitInfo.rigidbody;
@@ -45,7 +47,14 @@ public class Holder : MonoBehaviour
                     held.useGravity = false;
                 }
             }
+
+            pickupPressed = false;
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Debug.DrawRay(transform.position, transform.forward * 10f);
     }
 
     void OnPickUp(InputValue inputValue)

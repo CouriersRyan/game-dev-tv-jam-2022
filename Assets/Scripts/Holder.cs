@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
-///     Any object that, upon facing a Holdable, can pick up said Holdable
+///     Any object that, upon facing a Rigidbody, can pick up said Rigidbody
 /// </summary>
 public class Holder : MonoBehaviour
 {
@@ -12,26 +13,43 @@ public class Holder : MonoBehaviour
     ///     Distance between position and holdable when held
     /// </summary>
     [SerializeField] private Vector3 holdOffset;
-    
+
+    /// <summary>
+    ///     The rigidbody we are currently holding. Null if nothing is held.
+    /// </summary>
+    private Rigidbody held;
+
+    /// <summary>
+    ///     bruh
+    /// </summary>
+    private bool pickupPressed;
+
     void FixedUpdate()
     {
-        RaycastHit hitInfo;
-        if (Physics.Raycast(transform.position, transform.forward, out hitInfo))
+        if (pickupPressed)
         {
-            var holdable = hitInfo.collider.GetComponent<Holdable>();
-            if (holdable) Hold(holdable);
+            if (held)
+            {
+                held.transform.parent = null;
+                held.useGravity = true;
+            }
+            else
+            {
+                var holdableMask = 1 << LayerMask.NameToLayer("Holdable");
+                var facingRay = new Ray(transform.position, transform.forward);
+                if (Physics.Raycast(facingRay, out var hitInfo, maxDistance: Mathf.Infinity, layerMask: holdableMask))
+                {
+                    held = hitInfo.rigidbody;
+                    held.transform.position = transform.position + transform.TransformDirection(holdOffset);
+                    held.transform.parent = transform;
+                    held.useGravity = false;
+                }
+            }
         }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="holdable"></param>
-    private void Hold(Holdable holdable)
+    void OnPickUp(InputValue inputValue)
     {
-        holdable.transform.position = transform.position + transform.TransformDirection(holdOffset);
-        holdable.transform.parent = transform;
-        var rigidbody = holdable.GetComponent<Rigidbody>();
-        rigidbody.useGravity = false;
+        pickupPressed = inputValue.isPressed;
     }
 }
